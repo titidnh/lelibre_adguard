@@ -1,7 +1,9 @@
 # Manual blocked
-0.0.0.0 diagnostics.meethue.com
-0.0.0.0 activity.windows.com
-0.0.0.0 graph.facebook.com
-0.0.0.0 settings-win.data.microsoft.com
-0.0.0.0 auth-blue-prod.mediametrie.com
-0.0.0.0 traffic.alexa.com
+$dnstype=HTTPS
+||diagnostics.meethue.com
+||activity.windows.com
+||graph.facebook.com
+||settings-win.data.microsoft.com
+||auth-blue-prod.mediametrie.com
+||traffic.alexa.com
+||be-rtl.videoplaza.tv/proxy/distributor/$replace=/(\,"vast":\{)[\s\S]*(\}\}\])/\$1\$2/,important,domain=rtlplay.be
