@@ -1,0 +1,17 @@
+# Manual Allowed
+@@||jeuxvideo.com^
+@@||track.bpost.cloud^
+@@||device-provisioning.googleapis.com^
+@@||clientservices.googleapis.com^
+@@||geo.6play.fr^
+@@||ipinfo.io^
+@@||t.paypal.com^
+@@||tracking.dpd.de^
+@@||firebaseinstallations.googleapis.com^
+@@||androidtvwatsonfe-pa.googleapis.com^
+@@||edge-chat.facebook.com^
+@@||www.bol.com^
+# @@||www.tf1.fr^$important
+# RTLPlay
+# @@||be-rtl.videoplaza.tv^
+# @@||cdns.eu1.gigya.com^
