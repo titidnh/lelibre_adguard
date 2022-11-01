@@ -8,3 +8,10 @@ $dnstype=HTTPS
 ||traffic.alexa.com
 ||streaming-collect-hc-live-prod.mediametrie.com
 ||be-rtl.videoplaza.tv/proxy/distributor/$replace=/(\,"vast":\{)[\s\S]*(\}\}\])/\$1\$2/,important,domain=rtlplay.be
+
+||androidtvchannels-pa.googleapis.com
+||androidtvwatsonfe-pa.googleapis.com
+||mitv.tracking.intl.miui.com
+||tracking.intl.miui.com
+||data.mistat.intl.xiaomi.com
+||sdkconfig.ad.intl.xiaomi.com
