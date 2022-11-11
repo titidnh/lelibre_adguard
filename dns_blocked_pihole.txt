@@ -1,0 +1,16 @@
+# Manual blocked
+$dnstype=HTTPS
+0.0.0.0 diagnostics.meethue.com
+0.0.0.0 activity.windows.com
+0.0.0.0 graph.facebook.com
+0.0.0.0 settings-win.data.microsoft.com
+0.0.0.0 auth-blue-prod.mediametrie.com
+0.0.0.0 traffic.alexa.com
+0.0.0.0 streaming-collect-hc-live-prod.mediametrie.com
+
+0.0.0.0 androidtvchannels-pa.googleapis.com
+0.0.0.0 androidtvwatsonfe-pa.googleapis.com
+0.0.0.0 mitv.tracking.intl.miui.com
+0.0.0.0 tracking.intl.miui.com
+0.0.0.0 data.mistat.intl.xiaomi.com
+0.0.0.0 sdkconfig.ad.intl.xiaomi.com
