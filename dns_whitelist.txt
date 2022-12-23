@@ -11,6 +11,8 @@
 @@||androidtvwatsonfe-pa.googleapis.com^
 @@||edge-chat.facebook.com^
 @@||www.bol.com^
+@@||www.amazon.com.be^$important
+@@||www.ledauphine.com^$important
 # @@||www.tf1.fr^$important
 # RTLPlay
 # @@||be-rtl.videoplaza.tv^
