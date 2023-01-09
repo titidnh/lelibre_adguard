@@ -15,3 +15,30 @@ $dnstype=HTTPS
 ||tracking.intl.miui.com
 ||data.mistat.intl.xiaomi.com
 ||sdkconfig.ad.intl.xiaomi.com
+
+# LG
+||us.rdx2.lgtvsdp.com
+||us.info.lgsmartad.com
+||us.ibs.lgappstv.com
+||us.lgtvsdp.com
+||ad.lgappstv.com
+||smartshare.lgtvsdp.com
+||ibis.lgappstv.com
+
+# added after fork
+# from https://www.reddit.com/r/pihole/comments/6qmpv6/blacklists_for_lg_webos_tvs/ and others
+||us.ad.lgsmartad.com
+||lgad.cjpowercast.com.edgesuite.net
+||ngfts.lge.com
+||yumenetworks.com
+||smartclip.net
+||smartclip.com
+
+# non us
+||rdx2.lgtvsdp.com
+||info.lgsmartad.com
+||ibs.lgappstv.com
+||lgtvsdp.com
+||lgappstv.com
+||smartshare.lgtvsdp.com
+||lgappstv.com
