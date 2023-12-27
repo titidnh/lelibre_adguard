@@ -16,6 +16,8 @@ $dnstype=HTTPS
 ||data.mistat.intl.xiaomi.com
 ||sdkconfig.ad.intl.xiaomi.com
 
+||browser.sentry-cdn.com
+
 # LG
 ||us.rdx2.lgtvsdp.com
 ||us.info.lgsmartad.com
