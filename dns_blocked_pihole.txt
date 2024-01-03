@@ -18,6 +18,7 @@ ff02::3 ip6-allhosts
 
 # --------------------------------------------
 # Blocked hosts:
+0.0.0.0 browser.sentry-cdn.com
 0.0.0.0 diagnostics.meethue.com
 0.0.0.0 activity.windows.com
 0.0.0.0 graph.facebook.com
