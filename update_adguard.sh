@@ -570,11 +570,7 @@ function valid_domain(domain) {
         next
     }
 
-    if ($0 ~ /#\?#/) {
-        next
-    }
-
-    if ($0 ~ /#@#/) {
+    if ($0 ~ /#\+#/) {
         next
     }
 
@@ -667,7 +663,7 @@ function valid_domain(domain) {
 
         # Extraire uniquement la partie domaine.
         #
-        # On s'arrête à :
+        # On s arrete a :
         #   ^
         #   /
         #   $
