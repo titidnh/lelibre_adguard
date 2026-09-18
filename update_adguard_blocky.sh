@@ -115,6 +115,34 @@ GIT_REMOTE="$(git remote get-url origin)"
 
 
 # ============================================================
+# RESET GIT - SCRATCH HISTORIQUE LOCAL + SYNC REMOTE
+# ============================================================
+
+echo "Synchronizing repository with remote..."
+echo
+
+# Discard all local changes and untracked files
+if ! git reset --hard HEAD; then
+    echo "ERROR: impossible de faire reset --hard sur le repository Git." >&2
+    exit 1
+fi
+
+if ! git clean -fd; then
+    echo "ERROR: impossible de nettoyer les fichiers non suivis." >&2
+    exit 1
+fi
+
+# Force pull from remote to ensure latest version only
+if ! git pull --force origin "$GIT_BRANCH"; then
+    echo "ERROR: impossible de synchroniser avec le remote." >&2
+    exit 1
+fi
+
+echo "Repository synchronized. Now containing only latest version from remote."
+echo
+
+
+# ============================================================
 # TEMP DIRECTORY
 # ============================================================
 
@@ -613,7 +641,7 @@ echo
 
 git status --short
 
-git add -- "$GIT_FILE_ADGUARD" "$GIT_FILE_BLOCKY"
+git add .
 
 if git diff --cached --quiet; then
     echo
@@ -621,7 +649,8 @@ if git diff --cached --quiet; then
     exit 0
 fi
 
-COMMIT_MESSAGE="Update combined-filter.txt and blocky-filter.txt - generated ${GENERATION_DATE}"
+COMMIT_MESSAGE="Update all files - generated ${GENERATION_DATE}"
+
 
 echo
 echo "Commit message:"
