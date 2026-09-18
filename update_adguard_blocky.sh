@@ -321,7 +321,7 @@ function valid_domain(domain) {
         next
     }
 
-    if ($0 ~ /^[A-Za-z0-9._-]+$/) {
+    if ($0 ~ /^(\*\.)?[A-Za-z0-9._-]+$/) {
         domain = $0
         if (valid_domain(domain)) print "||" tolower(domain) "^"
         next
@@ -477,7 +477,12 @@ awk \
     END {
         for (d in block) {
             if (!(d in allow)) {
-                print block_ip " " d
+                # Blocky format: wildcards without IP, exact domains with IP
+                if (d ~ /^\*\./) {
+                    print d
+                } else {
+                    print block_ip " " d
+                }
             }
         }
     }
@@ -513,7 +518,8 @@ INVALID_BLOCKY=$(
     awk '
     /^#/ { next }
     /^$/ { next }
-    /^([0-9]{1,3}\.){3}[0-9]{1,3}[[:space:]]+\*?[A-Za-z0-9._-]+$/ { next }
+    /^([0-9]{1,3}\.){3}[0-9]{1,3}[[:space:]]+[A-Za-z0-9._-]+$/ { next }
+    /^\*\.[A-Za-z0-9._-]+$/ { next }
     { print }
     ' "$BLOCKY_TMP"
 )
