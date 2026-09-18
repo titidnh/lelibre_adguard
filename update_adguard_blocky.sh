@@ -59,6 +59,8 @@ FILTER_URLS=(
     "https://adguardteam.github.io/HostlistsRegistry/assets/filter_11.txt"
     "https://adguardteam.github.io/HostlistsRegistry/assets/filter_27.txt"
     "https://easylist-downloads.adblockplus.org/liste_fr.txt"
+    "https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/wildcard/tif.txt"
+    "https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/wildcard/pro.txt"
 )
 
 
@@ -250,8 +252,8 @@ NORMALIZED="$TMPDIR/normalized.txt"
 awk '
 
 function valid_domain(domain) {
-    if (domain !~ /^[A-Za-z0-9]/) return 0
-    if (domain !~ /^[A-Za-z0-9._-]+$/) return 0
+    if (domain !~ /^(\*\.)?[A-Za-z0-9]/) return 0
+    if (domain !~ /^\*?[A-Za-z0-9._-]+$/) return 0
     if (domain ~ /^\./ || domain ~ /\.$/) return 0
     if (domain ~ /\.\./) return 0
     if (domain == "localhost" || domain == "localhost.localdomain" || domain == "local") return 0
@@ -305,7 +307,7 @@ function valid_domain(domain) {
         }
 
         domain = $0
-        sub(/[\^\/$*|[:space:]].*$/, "", domain)
+        sub(/[\^\/$|[:space:]].*$/, "", domain)
         sub(/\.$/, "", domain)
 
         if (valid_domain(domain)) {
@@ -332,11 +334,69 @@ if [[ ! -s "$NORMALIZED" ]]; then
     exit 1
 fi
 
+SORTED_SIMPLE="$TMPDIR/sorted-simple.txt"
+LC_ALL=C sort -u "$NORMALIZED" > "$SORTED_SIMPLE"
+
+if [[ ! -s "$SORTED_SIMPLE" ]]; then
+    echo "ERROR: aucune regle apres deduplication." >&2
+    exit 1
+fi
+
+# Intelligent deduplication: remove rules covered by wildcards
+# Example: ||*.tracker.com^ makes ||sub.tracker.com^ redundant
+WILDCARDS_FILE="$TMPDIR/wildcards.txt"
+EXACT_FILE="$TMPDIR/exact.txt"
 SORTED="$TMPDIR/sorted.txt"
-LC_ALL=C sort -u "$NORMALIZED" > "$SORTED"
+
+# Extract wildcard rules
+grep '^\|\|\*\.' "$SORTED_SIMPLE" > "$WILDCARDS_FILE" || true
+
+# Extract exact rules
+grep -v '^\|\|\*\.' "$SORTED_SIMPLE" > "$EXACT_FILE" || true
+
+# Filter exact rules: keep only those NOT covered by any wildcard
+awk '
+BEGIN {
+    # Load wildcards file
+    wildcards_file = "'"$WILDCARDS_FILE"'"
+    while ((getline < wildcards_file) > 0) {
+        # Extract domain from ||*.tracker.com^
+        domain = $0
+        sub(/^\|\|\*\./, "", domain)
+        sub(/\^$/, "", domain)
+        wildcard[++count] = domain
+    }
+    close(wildcards_file)
+}
+
+{
+    # For each exact rule, check if its covered by a wildcard
+    domain = $0
+    sub(/^\|\|/, "", domain)
+    sub(/\^$/, "", domain)
+    
+    is_covered = 0
+    for (i = 1; i <= count; i++) {
+        # Check if domain ends with .wildcard_domain
+        # Example: tracker.example.com ends with .tracker.com
+        pattern = "\\." wildcard[i] "$"
+        if (match(domain, pattern)) {
+            is_covered = 1
+            break
+        }
+    }
+    
+    if (!is_covered) {
+        print $0
+    }
+}
+' "$EXACT_FILE" > "$SORTED.tmp"
+
+# Combine wildcards and filtered exact rules
+cat "$WILDCARDS_FILE" "$SORTED.tmp" > "$SORTED" 2>/dev/null || cat "$SORTED.tmp" > "$SORTED"
 
 if [[ ! -s "$SORTED" ]]; then
-    echo "ERROR: aucune regle apres deduplication." >&2
+    echo "ERROR: aucune regle apres deduplication intelligente." >&2
     exit 1
 fi
 
@@ -370,8 +430,8 @@ INVALID_ADGUARD=$(
     awk '
     /^!/ { next }
     /^$/ { next }
-    /^\|\|[A-Za-z0-9._-]+\^$/ { next }
-    /^@@\|\|[A-Za-z0-9._-]+\^$/ { next }
+    /^\|\|\*?[A-Za-z0-9._-]+\^$/ { next }
+    /^@@\|\|\*?[A-Za-z0-9._-]+\^$/ { next }
     { print }
     ' "$ADGUARD_TMP"
 )
@@ -395,7 +455,7 @@ BLOCKY_SORTED_TMP="$TMPDIR/blocky-sorted.txt"
 awk \
     -v block_ip="$BLOCK_IP" \
     '
-    /^@@\|\|[A-Za-z0-9._-]+\^$/ {
+    /^@@\|\|\*?[A-Za-z0-9._-]+\^$/ {
         d = $0
         sub(/^@@\|\|/, "", d)
         sub(/\^$/, "", d)
@@ -403,7 +463,7 @@ awk \
         next
     }
 
-    /^\|\|[A-Za-z0-9._-]+\^$/ {
+    /^\|\|\*?[A-Za-z0-9._-]+\^$/ {
         d = $0
         sub(/^\|\|/, "", d)
         sub(/\^$/, "", d)
@@ -450,7 +510,7 @@ INVALID_BLOCKY=$(
     awk '
     /^#/ { next }
     /^$/ { next }
-    /^([0-9]{1,3}\.){3}[0-9]{1,3}[[:space:]]+[A-Za-z0-9._-]+$/ { next }
+    /^([0-9]{1,3}\.){3}[0-9]{1,3}[[:space:]]+\*?[A-Za-z0-9._-]+$/ { next }
     { print }
     ' "$BLOCKY_TMP"
 )
