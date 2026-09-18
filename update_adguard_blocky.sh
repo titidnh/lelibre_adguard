@@ -61,6 +61,9 @@ FILTER_URLS=(
     "https://easylist-downloads.adblockplus.org/liste_fr.txt"
     "https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/wildcard/tif.txt"
     "https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/wildcard/pro.txt"
+    "https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/tif.txt"
+    "https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/fake.txt"
+    "https://phishing.army/download/phishing_army_blocklist_extended.txt"
 )
 
 
