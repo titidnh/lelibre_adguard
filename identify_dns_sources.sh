@@ -41,6 +41,7 @@ if [[ "$#" -eq 0 ]]; then
 fi
 
 DOMAINS_FILE=""
+CREATED_DOMAINS_FILE=0
 if [[ "$1" == "-f" ]]; then
     if [[ "$#" -ne 2 ]] || [[ ! -r "$2" ]]; then
         echo "ERROR: fichier de domaines introuvable ou illisible." >&2
@@ -49,15 +50,15 @@ if [[ "$1" == "-f" ]]; then
     fi
     DOMAINS_FILE="$2"
 else
-    DOMAINS_FILE="$(mktemp)"
-    trap 'rm -f "$DOMAINS_FILE"' EXIT
+    DOMAINS_FILE="$(mktemp "${SCRIPT_DIR}/identify_domains.XXXXXX" 2>/dev/null || mktemp)"
+    CREATED_DOMAINS_FILE=1
     printf '%s\n' "$@" > "$DOMAINS_FILE"
 fi
 
-TMPDIR="$(mktemp -d)"
+TMPDIR="$(mktemp -d "${SCRIPT_DIR}/identify_tmp.XXXXXX" 2>/dev/null || mktemp -d)"
 cleanup() {
     rm -rf "$TMPDIR"
-    if [[ "$#" -gt 0 ]] && [[ -n "${DOMAINS_FILE:-}" ]] && [[ "$DOMAINS_FILE" == /tmp/* ]]; then
+    if [[ "$CREATED_DOMAINS_FILE" -eq 1 ]] && [[ -n "${DOMAINS_FILE:-}" ]]; then
         rm -f "$DOMAINS_FILE"
     fi
 }
@@ -109,7 +110,7 @@ for index in "${!URL_ARRAY[@]}"; do
         done
         sleep 0.2
     done
-    download_source "$((index + 1))" "${URL_ARRAY[$index]}" &
+    download_source "$index" "${URL_ARRAY[$index]}" &
     PIDS+=("$!")
 done
 
