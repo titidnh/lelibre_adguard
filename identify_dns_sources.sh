@@ -38,6 +38,9 @@ for command in awk curl mktemp sed sort; do
     fi
 done
 
+num_rules=$(wc -l < "$RULES" 2>/dev/null || true)
+log "Extracted $num_rules rule(s) from sources"
+
 if [[ ! -r "$CONFIG_SCRIPT" ]]; then
     echo "ERROR: configuration introuvable: $CONFIG_SCRIPT" >&2
     exit 1
@@ -46,6 +49,12 @@ fi
 if [[ "$#" -eq 0 ]]; then
     usage
     exit 1
+fi
+
+# Allow a leading -v for verbose progress output
+if [[ "$1" == "-v" ]]; then
+    VERBOSE=1
+    shift || true
 fi
 
 DOMAINS_FILE=""
@@ -61,13 +70,17 @@ else
     DOMAINS_FILE="$(mktemp "${SCRIPT_DIR}/identify_domains.XXXXXX" 2>/dev/null || mktemp)"
     CREATED_DOMAINS_FILE=1
     printf '%s\n' "$@" > "$DOMAINS_FILE"
+    log "Created temporary domains file: $DOMAINS_FILE"
 fi
 
 TMPDIR="$(mktemp -d "${SCRIPT_DIR}/identify_tmp.XXXXXX" 2>/dev/null || mktemp -d)"
+log "Using temporary dir: $TMPDIR"
 cleanup() {
+    log "Cleaning up temporary files"
     rm -rf "$TMPDIR"
     if [[ "$CREATED_DOMAINS_FILE" -eq 1 ]] && [[ -n "${DOMAINS_FILE:-}" ]]; then
         rm -f "$DOMAINS_FILE"
+        log "Removed temporary domains file: $DOMAINS_FILE"
     fi
 }
 trap cleanup EXIT
@@ -83,6 +96,9 @@ awk '
 }
 ' "$DOMAINS_FILE" | LC_ALL=C sort -u > "$DOMAINS"
 
+num_domains=$(wc -l < "$DOMAINS" 2>/dev/null || true)
+log "Parsed $num_domains unique domain(s) to check"
+
 if [[ ! -s "$DOMAINS" ]]; then
     echo "ERROR: aucun domaine a analyser." >&2
     exit 1
@@ -97,16 +113,30 @@ if [[ ! -s "$URLS" ]]; then
     exit 1
 fi
 
+num_urls=$(wc -l < "$URLS" 2>/dev/null || true)
+log "Found $num_urls source URL(s) to download"
+
 download_source() {
     local index="$1"
     local url="$2"
-    curl --fail --silent --show-error --location --retry 2 \
+    if [[ "$VERBOSE" -ne 0 ]]; then
+        echo "[download] start $index: $url" >&2
+    fi
+    if curl --fail --silent --show-error --location --retry 2 \
         --connect-timeout 15 --max-time 600 "$url" \
-        -o "$TMPDIR/source-${index}.txt"
+        -o "$TMPDIR/source-${index}.txt"; then
+        if [[ "$VERBOSE" -ne 0 ]]; then
+            echo "[download] done  $index" >&2
+        fi
+    else
+        echo "[download] failed $index: $url" >&2
+        return 1
+    fi
 }
 
 mapfile -t URL_ARRAY < "$URLS"
 PIDS=()
+log "Starting downloads (max parallel: $MAX_PARALLEL)"
 for index in "${!URL_ARRAY[@]}"; do
     while (( ${#PIDS[@]} >= MAX_PARALLEL )); do
         for pid in "${PIDS[@]}"; do
@@ -133,6 +163,8 @@ if [[ "$FAILED" -ne 0 ]]; then
     echo "ERROR: $FAILED source(s) n'ont pas pu etre telechargee(s)." >&2
     exit 1
 fi
+
+log "All sources downloaded successfully"
 
 RULES="$TMPDIR/rules.txt"
 for index in "${!URL_ARRAY[@]}"; do
@@ -181,7 +213,11 @@ while IFS= read -r domain; do
     echo "$domain"
     if [[ -z "$matches" ]]; then
         echo "  Aucune source ne bloque ce domaine."
+        log "Domain $domain: 0 matches"
     else
+        match_count=$(printf '%s
+' "$matches" | wc -l)
+        log "Domain $domain: $match_count match(es)"
         while IFS= read -r source_index; do
             printf '  - %s\n' "${URL_ARRAY[$source_index]}"
         done <<< "$matches"
