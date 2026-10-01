@@ -40,7 +40,10 @@ done
 
 num_rules=$(wc -l < "$RULES" 2>/dev/null || true)
 log "Extracted $num_rules rule(s) from sources"
-
+if [[ "$VERBOSE" -ne 0 ]]; then
+    log "Sample rules (up to 10):"
+    sed -n '1,10p' "$RULES" 2>/dev/null | while IFS= read -r l; do log "  $l"; done
+fi
 if [[ ! -r "$CONFIG_SCRIPT" ]]; then
     echo "ERROR: configuration introuvable: $CONFIG_SCRIPT" >&2
     exit 1
@@ -201,6 +204,7 @@ done
 
 echo "DNS analyse(s):"
 while IFS= read -r domain; do
+    log "Processing domain: $domain"
     matches=$(awk -F '\t' -v domain="$domain" '
         function matches_rule(rule) {
             sub(/^\*\./, "", rule)
@@ -215,8 +219,8 @@ while IFS= read -r domain; do
         echo "  Aucune source ne bloque ce domaine."
         log "Domain $domain: 0 matches"
     else
-        match_count=$(printf '%s
 ' "$matches" | wc -l)
+        match_count=$(printf '%s\n' "$matches" | wc -l)
         log "Domain $domain: $match_count match(es)"
         while IFS= read -r source_index; do
             printf '  - %s\n' "${URL_ARRAY[$source_index]}"
