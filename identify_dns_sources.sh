@@ -140,6 +140,19 @@ download_source() {
 mapfile -t URL_ARRAY < "$URLS"
 PIDS=()
 log "Starting downloads (max parallel: $MAX_PARALLEL)"
+# If repo contains local filter files, prefer those and skip remote downloads
+LOCAL_CANDIDATES=("${SCRIPT_DIR}/blocky-filter.txt" "${SCRIPT_DIR}/combined-filter.txt")
+LOCAL_FOUND=()
+for f in "${LOCAL_CANDIDATES[@]}"; do
+    if [[ -r "$f" ]]; then
+        LOCAL_FOUND+=("$f")
+    fi
+done
+if (( ${#LOCAL_FOUND[@]} > 0 )); then
+    log "Using ${#LOCAL_FOUND[@]} local source(s) from repo; skipping remote downloads"
+    URL_ARRAY=("${LOCAL_FOUND[@]}")
+fi
+
 for index in "${!URL_ARRAY[@]}"; do
     while (( ${#PIDS[@]} >= MAX_PARALLEL )); do
         for pid in "${PIDS[@]}"; do
@@ -151,8 +164,16 @@ for index in "${!URL_ARRAY[@]}"; do
         done
         sleep 0.2
     done
-    download_source "$index" "${URL_ARRAY[$index]}" &
-    PIDS+=("$!")
+    # If the source is a local file path, copy it instead of downloading
+    src="${URL_ARRAY[$index]}"
+    if [[ -f "$src" ]]; then
+        log "Copying local source $src to temporary dir as source-$index.txt"
+        cp -- "$src" "$TMPDIR/source-${index}.txt" &
+        PIDS+=("$!")
+    else
+        download_source "$index" "${URL_ARRAY[$index]}" &
+        PIDS+=("$!")
+    fi
 done
 
 FAILED=0
@@ -219,7 +240,6 @@ while IFS= read -r domain; do
         echo "  Aucune source ne bloque ce domaine."
         log "Domain $domain: 0 matches"
     else
-' "$matches" | wc -l)
         match_count=$(printf '%s\n' "$matches" | wc -l)
         log "Domain $domain: $match_count match(es)"
         while IFS= read -r source_index; do
