@@ -8,6 +8,14 @@ SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 CONFIG_SCRIPT="${SCRIPT_DIR}/update_adguard.sh"
 MAX_PARALLEL="${MAX_PARALLEL:-5}"
 
+VERBOSE=0
+
+log() {
+    if [[ "$VERBOSE" -ne 0 ]]; then
+        echo "$@" >&2
+    fi
+}
+
 usage() {
     cat >&2 <<'EOF'
 Usage:
